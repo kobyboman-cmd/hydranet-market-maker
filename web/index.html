@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hydranet Passive Maker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body class="dark-theme">
+  <div class="app-layout">
+
+    <!-- Top Navigation Header -->
+    <header class="top-nav glass-panel">
+      <div class="nav-left">
+        <div class="logo-mark">
+          <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
+            <circle cx="16" cy="16" r="14" stroke="url(#h-grad)" stroke-width="2.5" />
+            <path d="M9 16L16 8L23 16L16 24L9 16Z" fill="url(#h-grad)" fill-opacity="0.85" />
+            <circle cx="16" cy="16" r="3" fill="#070a13" />
+            <defs>
+              <linearGradient id="h-grad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#00F0FF" />
+                <stop offset="0.5" stop-color="#10B981" />
+                <stop offset="1" stop-color="#8B5CF6" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="brand-titles">
+          <h1>HYDRANET <span class="accent-text">MAKER</span></h1>
+        </div>
+      </div>
+
+      <div class="nav-center">
+        <div class="view-tabs" id="mainViewTabs">
+          <button type="button" class="view-tab active" data-view-tab="trading" id="btnTabTrading">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 19c3.5 0 5-12 9-12s5.5 12 9 12" />
+              <line x1="12" y1="3" x2="12" y2="21" stroke-dasharray="2 2" />
+            </svg>
+            <span>Trading</span>
+          </button>
+          <button type="button" class="view-tab" data-view-tab="channels" id="btnTabChannels">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 2 7 12 12 22 7 12 2" />
+              <polyline points="2 17 12 22 22 17" />
+              <polyline points="2 12 12 17 22 12" />
+            </svg>
+            <span>Channel Management</span>
+            <span class="tab-attention-badge" id="tabChannelsAttentionBadge" style="display: none;">0</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="nav-right">
+        <div class="pill-group" id="railSelector">
+          <button class="pill-btn active" id="btnRailMainnet" data-rail="mainnet">Mainnet</button>
+          <button class="pill-btn" id="btnRailTestnet" data-rail="testnet">Testnet</button>
+        </div>
+        <span class="badge" id="modeBadge">LIVE</span>
+        <span class="badge badge-success" id="statusBadge">ACTIVE</span>
+        <button id="btnPause" class="btn btn-secondary btn-sm">Pause</button>
+        <button id="btnTick" class="btn btn-primary btn-sm">Refresh</button>
+      </div>
+    </header>
+
+    <!-- Main Dashboard Grid -->
+    <main class="dashboard-content">
+
+      <!-- Top 4 Hero Metric Cards -->
+      <section class="metrics-grid">
+        <!-- 1. Total Asset Balance (On-Chain + Off-Chain + Ecash) -->
+        <div class="card glass-panel metric-card">
+          <div class="card-caption flex-between">
+            <span>TOTAL ASSET BALANCE</span>
+            <span class="badge-mini badge-cyan" id="metricTotalAssetBadge">PORTFOLIO</span>
+          </div>
+          <div class="metric-val" id="metricTotalAssetBalance">$0.00</div>
+          <div class="metric-sub" id="metricAssetBreakdown">On-Chain: $0 &bull; Off-Chain: $0 &bull; Ecash: $0</div>
+        </div>
+
+        <!-- 2. Passive Income (Maker Rebates + Spread Capture) -->
+        <div class="card glass-panel metric-card rebate-highlight-card">
+          <div class="card-caption flex-between">
+            <span>PASSIVE EARNINGS</span>
+            <span class="badge-mini badge-emerald" id="activeRebateBadge">+0.10% Rebate</span>
+          </div>
+          <div class="metric-val text-emerald" id="metricPassiveIncome">+$0.0000</div>
+          <div class="metric-sub flex-between">
+            <span id="metricRebateBreakdown">Rebates: $0.00 &bull; Spread: $0.00</span>
+            <span class="mono-dim" id="metricFillsCount">0 fills</span>
+          </div>
+        </div>
+
+        <!-- 3. Rolling 30d Volume & Maker Fee Tier Progress Bar -->
+        <div class="card glass-panel metric-card">
+          <div class="card-caption flex-between">
+            <span>ROLLING 30D VOLUME</span>
+            <span class="badge-mini badge-purple" id="metricVolumeTierBadge">Tier 0</span>
+          </div>
+          <div class="metric-val" id="metricVolume30d">$0.00</div>
+          <div class="mini-balance-track volume-tier-track">
+            <div class="mini-balance-fill volume-tier-fill" id="volumeTierProgressFill" style="width: 0%;"></div>
+          </div>
+          <div class="metric-sub" id="metricVolumeNextTierText">$0 / $10,000 to Tier 1 (+20% Rebate)</div>
+        </div>
+
+        <!-- 4. Channel Health (Do any channels need attention) -->
+        <div class="card glass-panel metric-card" id="channelHealthCard">
+          <div class="card-caption flex-between">
+            <span>CHANNEL HEALTH</span>
+            <span class="badge-mini badge-emerald" id="metricChannelHealthBadge">ALL HEALTHY</span>
+          </div>
+          <div class="metric-val text-emerald" id="metricChannelHealthStatus">All Ready</div>
+          <div class="metric-sub" id="metricChannelHealthSub">Full 15-rung Bids &amp; Asks active</div>
+        </div>
+      </section>
+
+      <!-- ==================== TAB 1: TRADING (Gaussian DLMM + Trade Log) ==================== -->
+      <div class="tab-view-panel" id="tabPanelTrading">
+        <!-- VISUALIZER 1: Unified Multi-Pair Gaussian Maker Curves Card -->
+        <section class="card glass-panel curve-visualizer-section">
+          <div class="card-header curve-card-header flex-between">
+            <div class="header-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 19c3.5 0 5-12 9-12s5.5 12 9 12" />
+                <line x1="12" y1="3" x2="12" y2="21" stroke-dasharray="2 2" />
+              </svg>
+              <h3 id="curveVisualizerTitle">Maker Liquidity Curves</h3>
+              <span class="badge-mini badge-cyan" id="activePairsCountBadge">4/4 Pairs Active</span>
+            </div>
+
+            <div class="pair-toggles-bar" id="pairTogglesBar">
+              <label class="pair-toggle-pill active" data-pair-toggle="BTC/USDC" title="Toggle trading &amp; advisor monitoring for BTC/USDC">
+                <input type="checkbox" class="pair-toggle-input" data-pair="BTC/USDC" checked>
+                <span class="pair-toggle-switch"></span>
+                <span class="pair-toggle-label">BTC / USDC</span>
+                <span class="rebate-pill">+0.10%</span>
+              </label>
+              <label class="pair-toggle-pill active" data-pair-toggle="ETH/USDC" title="Toggle trading &amp; advisor monitoring for ETH/USDC">
+                <input type="checkbox" class="pair-toggle-input" data-pair="ETH/USDC" checked>
+                <span class="pair-toggle-switch"></span>
+                <span class="pair-toggle-label">ETH / USDC</span>
+                <span class="rebate-pill">+0.075%</span>
+              </label>
+              <label class="pair-toggle-pill active" data-pair-toggle="ETH/BTC" title="Toggle trading &amp; advisor monitoring for ETH/BTC">
+                <input type="checkbox" class="pair-toggle-input" data-pair="ETH/BTC" checked>
+                <span class="pair-toggle-switch"></span>
+                <span class="pair-toggle-label">ETH / BTC</span>
+                <span class="rebate-pill">+0.10%</span>
+              </label>
+              <label class="pair-toggle-pill active" data-pair-toggle="HDN/USDC" title="Toggle trading &amp; advisor monitoring for HDN/USDC">
+                <input type="checkbox" class="pair-toggle-input" data-pair="HDN/USDC" checked>
+                <span class="pair-toggle-switch"></span>
+                <span class="pair-toggle-label">HDN / USDC</span>
+                <span class="rebate-pill">+0.05%</span>
+              </label>
+              <label class="pair-toggle-pill" data-pair-toggle="ETH(Arb)/ETH(Eth)" title="Toggle 1:1 Cross-Chain Stableswap Peg for ETH (Arbitrum) / ETH (Ethereum)">
+                <input type="checkbox" class="pair-toggle-input" data-pair="ETH(Arb)/ETH(Eth)">
+                <span class="pair-toggle-switch"></span>
+                <span class="pair-toggle-label">ETH(Arb) / ETH(Eth)</span>
+                <span class="rebate-pill">+0.025%</span>
+              </label>
+              <label class="pair-toggle-pill" data-pair-toggle="USDC(Arb)/USDC(Eth)" title="Toggle 1:1 Cross-Chain Stableswap Peg for USDC (Arbitrum) / USDC (Ethereum)">
+                <input type="checkbox" class="pair-toggle-input" data-pair="USDC(Arb)/USDC(Eth)">
+                <span class="pair-toggle-switch"></span>
+                <span class="pair-toggle-label">USDC(Arb) / USDC(Eth)</span>
+                <span class="rebate-pill">+0.025%</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="curves-grid" id="curvesGridContainer">
+            <!-- Dynamically renders Gaussian curve charts for all toggled-on pairs -->
+          </div>
+        </section>
+
+        <!-- Bottom Card in Trading Tab: Trade Log (Executed Maker Fills & Rebates) -->
+        <section class="card glass-panel trade-log-section">
+          <div class="card-header flex-between">
+            <div class="header-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+              </svg>
+              <h3 id="tradeLogTitle">Trade Log</h3>
+            </div>
+            <span class="badge-pill" id="tradeLogSummaryBadge">0 Trades &bull; +$0.0000 Rebates</span>
+          </div>
+
+          <div class="trade-log-table">
+            <div class="trade-log-header">
+              <span>Time</span>
+              <span>Market</span>
+              <span>Side / Rung</span>
+              <span>Price</span>
+              <span>Size</span>
+              <span>Value</span>
+              <span class="text-right">Rebate &amp; Yield</span>
+            </div>
+            <div class="trade-log-rows" id="tradeLogBody">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ==================== TAB 2: CHANNEL MANAGEMENT (Channels + Standalone Channel Management Log) ==================== -->
+      <div class="tab-view-panel" id="tabPanelChannels" style="display: none;">
+        <!-- Card 1 in Channel Management Tab: Unified Channel Management Card (BTC + Cashu Vault + Lithium Channels) -->
+        <section class="card glass-panel channel-mgmt-section">
+          <div class="card-header flex-between">
+            <div class="header-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                <polyline points="2 17 12 22 22 17" />
+                <polyline points="2 12 12 17 22 12" />
+              </svg>
+              <h3>Channel Management</h3>
+            </div>
+
+            <div class="cm-header-right">
+              <div class="cm-auto-bar cm-auto-header-bar">
+                <span class="cm-auto-title">AUTOMATE:</span>
+                <div class="pair-toggles-bar cm-toggles-group">
+                  <label class="pair-toggle-pill active" id="pillAutoCashu" title="Automatically Mint &amp; Melt Cashu Ecash when BTC channel inbound/outbound needs rebalancing">
+                    <input type="checkbox" class="pair-toggle-input" id="chkAutoCashu" checked>
+                    <span class="pair-toggle-switch"></span>
+                    <span class="pair-toggle-label">Cashu Vault</span>
+                  </label>
+                  <label class="pair-toggle-pill" id="pillAutoBtcChannels" title="Automatically expand or rotate BTC Lightning channels (max 4 Hub channels) when Cashu rebalances frequently">
+                    <input type="checkbox" class="pair-toggle-input" id="chkAutoBtcChannels">
+                    <span class="pair-toggle-switch"></span>
+                    <span class="pair-toggle-label">BTC Channels</span>
+                  </label>
+                  <label class="pair-toggle-pill" id="pillAutoLithiumChannels" title="Automatically deposit wallet funds or rent inbound capacity on your Ethereum &amp; Arbitrum Lithium channels">
+                    <input type="checkbox" class="pair-toggle-input" id="chkAutoLithiumChannels">
+                    <span class="pair-toggle-switch"></span>
+                    <span class="pair-toggle-label">Lithium Channels</span>
+                  </label>
+                </div>
+              </div>
+              <span class="badge-pill" id="walletTotalsBadge">Wallet: $0 &bull; Channel: $0</span>
+            </div>
+          </div>
+
+          <!-- Inline Action Drawer (Appears only when clicking Deposit / Withdraw / Inbound / Open) -->
+          <div class="inline-transfer-drawer" id="inlineTransferDrawer" style="display: none;">
+            <div class="drawer-top flex-between">
+              <strong id="drawerTitle" class="text-main">Deposit ETH to Channel</strong>
+              <span id="drawerAvailText" class="mono-dim">Avail: 0.00</span>
+            </div>
+            <div class="drawer-controls">
+              <div class="bridge-input-wrap">
+                <input type="number" id="inpBridgeAmount" class="bridge-input mono" step="any" min="0" placeholder="0.00" />
+                <button type="button" class="btn-pct" data-pct="0.25">25%</button>
+                <button type="button" class="btn-pct" data-pct="0.5">50%</button>
+                <button type="button" class="btn-pct" data-pct="1.0">MAX</button>
+              </div>
+              <button type="button" id="btnExecuteBridge" class="btn btn-primary btn-sm">Confirm</button>
+              <button type="button" id="btnCancelBridge" class="btn btn-secondary btn-sm">&times;</button>
+            </div>
+          </div>
+
+          <!-- Top Row: BTC Lightning Channel (Left) + Mint/Melt Arrows & Cashu Ecash Vault (Right) -->
+          <div class="cm-main-grid">
+            <div class="cm-left-col">
+              <div class="cm-btc-slot" id="btcChannelContainer">
+                <!-- BTC Lightning channel rendered via JS -->
+              </div>
+            </div>
+
+            <div class="cm-right-col">
+              <div class="cm-vault-row">
+                <div class="cm-vault-arrows">
+                  <button type="button" id="btnManualSweep" class="vault-arrow-btn arrow-mint" title="Mint Ecash: Sweep local BTC from channel into Cashu Vault to free inbound capacity">
+                    <span class="arrow-label">MINT</span>
+                    <span class="arrow-glyph">&rarr;</span>
+                  </button>
+                  <button type="button" id="btnManualRefuel" class="vault-arrow-btn arrow-melt" title="Melt Ecash: Refuel BTC channel send capacity from Cashu Vault">
+                    <span class="arrow-glyph">&larr;</span>
+                    <span class="arrow-label">MELT</span>
+                  </button>
+                </div>
+
+                <div class="cm-vault-box" id="cashuVaultBox">
+                  <div class="vault-box-header flex-between">
+                    <span class="vault-box-tag">CASHU ECASH VAULT</span>
+                    <span class="badge-mini badge-slate" id="localMintStatusBadge">Not Initialized</span>
+                  </div>
+
+                  <!-- Uninitialized State (Default until user accepts risk disclosure) -->
+                  <div class="vault-uninit-view" id="cashuVaultUninitView">
+                    <span class="vault-uninit-desc">Instant BTC Lightning inbound/outbound rebalancing buffer via community Cashu Mint.</span>
+                    <button type="button" id="btnOpenCashuInitModal" class="btn btn-primary btn-xs">
+                      &#x26A1; Initialize Cashu Vault
+                    </button>
+                  </div>
+
+                  <!-- Active State (Shown once initialized) -->
+                  <div class="vault-active-view" id="cashuVaultActiveView" style="display: none;">
+                    <div class="vault-box-sats text-cyan" id="fwVaultSats">0 sats</div>
+                    <div class="vault-box-footer flex-between">
+                      <span class="vault-box-sub" id="fwVaultUsd">&approx; $0.00 &bull; <span id="proofCountBadge">0 Proofs</span></span>
+                      <button type="button" id="btnExportToken" class="btn btn-secondary btn-xs">Export</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Row inside Channel Management Card: Ethereum & Arbitrum Lithium Channels -->
+          <div class="cm-lithium-col" id="channelsContainer">
+            <!-- Ethereum & Arbitrum Lithium channels rendered via JS -->
+          </div>
+        </section>
+
+        <!-- Card 2 in Channel Management Tab: Standalone Channel Management Log Card -->
+        <section class="card glass-panel channel-log-section">
+          <div class="card-header flex-between">
+            <div class="header-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+              </svg>
+              <h3>Channel Management Log</h3>
+            </div>
+            <span class="badge-pill" id="cmLogCountBadge">0 Actions</span>
+          </div>
+
+          <div class="cm-log-standalone-body" id="channelMgmtLogBody">
+            <!-- Rendered via JS -->
+          </div>
+        </section>
+      </div>
+
+    </main>
+
+    <!-- Export Token Modal -->
+    <div class="modal-backdrop" id="exportModal">
+      <div class="modal-content glass-panel">
+        <div class="modal-header flex-between">
+          <h3>Export Ecash Token</h3>
+          <button class="modal-close" id="btnCloseModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-desc">
+            Paste this <span class="mono-tag">cashuA...</span> token into any Cashu wallet.
+          </p>
+          <div class="token-box">
+            <textarea id="txtTokenString" readonly rows="4" placeholder="Fetching token..."></textarea>
+          </div>
+          <div class="modal-actions flex-between">
+            <span class="token-amount" id="modalTokenAmount">0 sats</span>
+            <button id="btnCopyToken" class="btn btn-primary">Copy Token</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cashu Vault Explanation & Risk Disclosure Modal -->
+    <div class="modal-backdrop" id="cashuInitModal">
+      <div class="modal-content glass-panel cashu-init-modal-content">
+        <div class="modal-header flex-between">
+          <h3>&#x26A1; Initialize Cashu Ecash Vault</h3>
+          <button class="modal-close" id="btnCloseCashuInitModal">&times;</button>
+        </div>
+        <div class="modal-body cashu-disclosure-body">
+          <div class="disclosure-section">
+            <div class="flex-between">
+              <div class="disclosure-heading text-cyan">What is Cashu &amp; How Does This Work?</div>
+              <a href="https://cashu.space" target="_blank" rel="noopener noreferrer" class="cashu-learn-more-link">
+                cashu.space &nearr;
+              </a>
+            </div>
+            <p class="modal-desc">
+              <strong>Cashu</strong> is an open-source Chaumian Ecash protocol built on Bitcoin Lightning (<a href="https://cashu.space" target="_blank" rel="noopener noreferrer" class="cashu-inline-link">learn more at cashu.space &nearr;</a>). Normally, market making on Lightning requires running your own routing node or paying recurring channel rental fees whenever your BTC channel fills up on one side.
+            </p>
+            <p class="modal-desc">
+              This vault connects to the community Cashu Mint to act as an automatic <strong>push/pull liquidity buffer</strong> for your Bitcoin channel:
+            </p>
+            <ul class="disclosure-list">
+              <li><strong class="text-emerald">MINT &rarr; (Restore Inbound):</strong> When your BTC channel fills up locally and runs low on <em>Receive</em> capacity, the bot sweeps sats over Lightning into Ecash bearer tokens so you can keep receiving BTC on trades.</li>
+              <li><strong class="text-cyan">&larr; MELT (Restore Outbound):</strong> When your BTC channel runs low on <em>Send</em> capacity, the bot melts those Ecash tokens back into your Lightning channel on demand.</li>
+            </ul>
+          </div>
+
+          <div class="disclosure-section disclosure-risk-box">
+            <div class="disclosure-heading text-gold">&#x26A0;&#xFE0F; Important Risks to Understand</div>
+            <ul class="disclosure-list">
+              <li><strong>Custodial Mint Risk:</strong> While Chaumian blind signatures protect your privacy, the community Cashu Mint holds the backing Bitcoin while your sats sit in the vault. If the Mint goes permanently offline or fails, unmelted Ecash held in the vault cannot be recovered.</li>
+              <li><strong>Local Bearer Token Storage:</strong> Your Ecash proofs are stored locally on your machine (<span class="mono-tag">data/cashu_wallet.json</span>) like digital cash. Anyone with access to that file or exported <span class="mono-tag">cashuA...</span> tokens can spend them, and deleting the file without a backup loses unmelted proofs.</li>
+              <li><strong>Short-Term Rebalancing Buffer Only:</strong> Only use the Cashu Vault as a working liquidity buffer for active market making &mdash; not for long-term storage. You can melt your Ecash back into your channel or export <span class="mono-tag">cashuA...</span> tokens at any time.</li>
+            </ul>
+          </div>
+
+          <div class="modal-actions flex-between">
+            <button type="button" id="btnCancelCashuInit" class="btn btn-secondary">Do Not Initialize</button>
+            <button type="button" id="btnConfirmCashuInit" class="btn btn-primary">I Understand &mdash; Initialize Vault</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app.js?v=3"></script>
+</body>
+</html>

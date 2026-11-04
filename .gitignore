@@ -1,0 +1,26 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Local environment & secrets
+.env
+.env.*
+!.env.example
+*.macaroon*
+*.key
+*.pem
+*.cert
+
+# Bot local database, wallets & history
+data/
+*.log
+
+# Operating System Files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,71 @@
+# =============================================================================
+# Hydranet Testnet (Bitcoin Signet 0a03cf40) Cashu Mint + LND Neutrino Stack
+# =============================================================================
+# Usage:
+#   1. Instant FakeWallet Signet Mint (no LND sync required):
+#      docker compose -f docker-compose.testnet.yml up -d nutshell-signet
+#
+#   2. Full Bitcoin Signet LND (Neutrino Light Client) + Cashu Nutshell Mint:
+#      docker compose -f docker-compose.testnet.yml --profile signet-lnd up -d
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # 1. Cashu Nutshell Mint (Port 3338)
+  #    By default uses FakeWallet for instant NUT-04/NUT-05 testing.
+  #    Set MINT_BACKEND_BOLT11_SAT=LndRestWallet when using lnd-signet below.
+  # ---------------------------------------------------------------------------
+  nutshell-signet:
+    image: cashubtc/nutshell:latest
+    container_name: hydranet-cashu-signet-mint
+    ports:
+      - "3338:3338"
+    environment:
+      - MINT_LISTEN_HOST=0.0.0.0
+      - MINT_LISTEN_PORT=3338
+      - MINT_PRIVATE_KEY=${MINT_PRIVATE_KEY:-hydranet_signet_community_mint_secret_key_2026}
+      - MINT_INFO_NAME=Hydranet Community Signet Cashu Mint
+      - MINT_INFO_DESCRIPTION=Bitcoin Signet (0a03cf40) Chaumian Ecash Liquidity Valve for Hydranet DEX
+      - MINT_BACKEND_BOLT11_SAT=${MINT_BACKEND_BOLT11_SAT:-FakeWallet}
+      - MINT_LND_REST_ENDPOINT=${MINT_LND_REST_ENDPOINT:-https://lnd-signet:8080}
+      - MINT_LND_REST_CERT=${MINT_LND_REST_CERT:-/lnd/tls.cert}
+      - MINT_LND_REST_MACAROON=${MINT_LND_REST_MACAROON:-/lnd/data/chain/bitcoin/signet/admin.macaroon}
+    volumes:
+      - nutshell_signet_data:/app/data
+      - lnd_signet_data:/lnd:ro
+    command: ["poetry", "run", "mint"]
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # 2. Bitcoin Signet LND Node (Neutrino Light Client - Fast Sync, No Full Node)
+  #    Connects to Bitcoin Signet (0a03cf40) so you can open a Signet Lightning
+  #    channel to Hydranet's Signet Hub and settle real Signet BOLT11 HTLCs.
+  # ---------------------------------------------------------------------------
+  lnd-signet:
+    image: lightninglabs/lnd:v0.18.3-beta
+    container_name: hydranet-lnd-signet
+    profiles:
+      - signet-lnd
+    ports:
+      - "9735:9735"   # Lightning P2P
+      - "8081:8080"   # LND REST API (mapped to 8081 on host to avoid dashboard port 8080)
+      - "10009:10009" # LND gRPC
+    command: >
+      --bitcoin.active
+      --bitcoin.signet
+      --bitcoin.node=neutrino
+      --neutrino.addpeer=seed.signet.bitcoin.sprovoost.nl:38333
+      --neutrino.addpeer=178.128.221.177:38333
+      --fee.url=https://mempool.space/signet/api/v1/fees/recommended-lnd
+      --restlisten=0.0.0.0:8080
+      --rpclisten=0.0.0.0:10009
+      --tlsextradomain=lnd-signet
+      --accept-keysend
+    volumes:
+      - lnd_signet_data:/root/.lnd
+    restart: unless-stopped
+
+volumes:
+  nutshell_signet_data:
+  lnd_signet_data:
+
